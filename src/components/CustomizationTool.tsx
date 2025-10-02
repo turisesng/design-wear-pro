@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Canvas as FabricCanvas, FabricText, FabricImage } from "fabric";
+import { Canvas as FabricCanvas, FabricText, FabricImage, Circle, Ellipse, Rect, Group } from "fabric";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Type, Image, RotateCcw, ShoppingCart } from "lucide-react";
+import { Type, Image, RotateCcw, ShoppingCart, Circle as CircleIcon, Square, Star } from "lucide-react";
 import { Product } from "./ProductCard";
 import { toast } from "sonner";
 
@@ -22,6 +22,15 @@ export const CustomizationTool = ({ selectedProduct, onAddToCart }: Customizatio
   const [fontSize, setFontSize] = useState("40");
   const [textColor, setTextColor] = useState("#000000");
   const [fontFamily, setFontFamily] = useState("Arial");
+  
+  // Badge shape states
+  const [badgeText, setBadgeText] = useState("");
+  const [badgeShape, setBadgeShape] = useState<"circle" | "oval" | "rectangle" | "rounded" | "star">("circle");
+  const [badgeFillColor, setBadgeFillColor] = useState("#2d5a3d");
+  const [badgeBorderColor, setBadgeBorderColor] = useState("#ffffff");
+  const [badgeBorderWidth, setBadgeBorderWidth] = useState("3");
+  const [badgeTextColor, setBadgeTextColor] = useState("#ffffff");
+  const [badgeFontSize, setBadgeFontSize] = useState("30");
 
   useEffect(() => {
     if (!canvasRef.current || !selectedProduct) return;
@@ -100,6 +109,79 @@ export const CustomizationTool = ({ selectedProduct, onAddToCart }: Customizatio
     toast.info("Design cleared");
   };
 
+  const addBadgeShape = () => {
+    if (!fabricCanvas || !badgeText) {
+      toast.error("Please enter text for the badge");
+      return;
+    }
+
+    let shape: Circle | Ellipse | Rect;
+    const shapeOptions = {
+      fill: badgeFillColor,
+      stroke: badgeBorderColor,
+      strokeWidth: parseInt(badgeBorderWidth),
+      left: 200,
+      top: 200,
+    };
+
+    if (badgeShape === "circle") {
+      shape = new Circle({
+        ...shapeOptions,
+        radius: 60,
+      });
+    } else if (badgeShape === "oval") {
+      shape = new Ellipse({
+        ...shapeOptions,
+        rx: 80,
+        ry: 50,
+      });
+    } else if (badgeShape === "rectangle") {
+      shape = new Rect({
+        ...shapeOptions,
+        width: 150,
+        height: 80,
+        rx: 0,
+        ry: 0,
+      });
+    } else if (badgeShape === "rounded") {
+      shape = new Rect({
+        ...shapeOptions,
+        width: 150,
+        height: 80,
+        rx: 20,
+        ry: 20,
+      });
+    } else { // star
+      shape = new Rect({
+        ...shapeOptions,
+        width: 120,
+        height: 120,
+        rx: 15,
+        ry: 15,
+        angle: 45,
+      });
+    }
+
+    const text = new FabricText(badgeText, {
+      fontSize: parseInt(badgeFontSize),
+      fill: badgeTextColor,
+      fontFamily: fontFamily,
+      textAlign: "center",
+      originX: "center",
+      originY: "center",
+    });
+
+    const group = new Group([shape, text], {
+      left: 200,
+      top: 200,
+    });
+
+    fabricCanvas.add(group);
+    fabricCanvas.setActiveObject(group);
+    fabricCanvas.renderAll();
+    toast.success("Badge added to design");
+  };
+
   const handleAddToCart = () => {
     if (!selectedProduct) {
       toast.error("No product selected");
@@ -152,10 +234,14 @@ export const CustomizationTool = ({ selectedProduct, onAddToCart }: Customizatio
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="text" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="text">
                     <Type className="h-4 w-4 mr-2" />
                     Text
+                  </TabsTrigger>
+                  <TabsTrigger value="badge">
+                    <CircleIcon className="h-4 w-4 mr-2" />
+                    Badge
                   </TabsTrigger>
                   <TabsTrigger value="image">
                     <Image className="h-4 w-4 mr-2" />
@@ -222,6 +308,140 @@ export const CustomizationTool = ({ selectedProduct, onAddToCart }: Customizatio
 
                   <Button onClick={addText} className="w-full" variant="secondary">
                     Add Text to Design
+                  </Button>
+                </TabsContent>
+
+                <TabsContent value="badge" className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="badgeText">Badge Text</Label>
+                    <Input
+                      id="badgeText"
+                      placeholder="Enter badge text..."
+                      value={badgeText}
+                      onChange={(e) => setBadgeText(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Badge Shape</Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <Button
+                        variant={badgeShape === "circle" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setBadgeShape("circle")}
+                        className="flex flex-col items-center gap-1 h-auto py-2"
+                      >
+                        <CircleIcon className="h-5 w-5" />
+                        <span className="text-xs">Circle</span>
+                      </Button>
+                      <Button
+                        variant={badgeShape === "oval" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setBadgeShape("oval")}
+                        className="flex flex-col items-center gap-1 h-auto py-2"
+                      >
+                        <CircleIcon className="h-5 w-5 scale-x-150" />
+                        <span className="text-xs">Oval</span>
+                      </Button>
+                      <Button
+                        variant={badgeShape === "rectangle" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setBadgeShape("rectangle")}
+                        className="flex flex-col items-center gap-1 h-auto py-2"
+                      >
+                        <Square className="h-5 w-5" />
+                        <span className="text-xs">Rectangle</span>
+                      </Button>
+                      <Button
+                        variant={badgeShape === "rounded" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setBadgeShape("rounded")}
+                        className="flex flex-col items-center gap-1 h-auto py-2"
+                      >
+                        <Square className="h-5 w-5 rounded-md" />
+                        <span className="text-xs">Rounded</span>
+                      </Button>
+                      <Button
+                        variant={badgeShape === "star" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setBadgeShape("star")}
+                        className="flex flex-col items-center gap-1 h-auto py-2"
+                      >
+                        <Star className="h-5 w-5" />
+                        <span className="text-xs">Star</span>
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="badgeFontSize">Text Size</Label>
+                      <Select value={badgeFontSize} onValueChange={setBadgeFontSize}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="16">Small</SelectItem>
+                          <SelectItem value="24">Medium</SelectItem>
+                          <SelectItem value="30">Large</SelectItem>
+                          <SelectItem value="40">Extra Large</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="badgeTextColor">Text Color</Label>
+                      <Input
+                        id="badgeTextColor"
+                        type="color"
+                        value={badgeTextColor}
+                        onChange={(e) => setBadgeTextColor(e.target.value)}
+                        className="w-full h-10"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="badgeFillColor">Fill Color</Label>
+                      <Input
+                        id="badgeFillColor"
+                        type="color"
+                        value={badgeFillColor}
+                        onChange={(e) => setBadgeFillColor(e.target.value)}
+                        className="w-full h-10"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="badgeBorderColor">Border Color</Label>
+                      <Input
+                        id="badgeBorderColor"
+                        type="color"
+                        value={badgeBorderColor}
+                        onChange={(e) => setBadgeBorderColor(e.target.value)}
+                        className="w-full h-10"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="badgeBorderWidth">Border Width</Label>
+                    <Select value={badgeBorderWidth} onValueChange={setBadgeBorderWidth}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0">None</SelectItem>
+                        <SelectItem value="2">Thin</SelectItem>
+                        <SelectItem value="3">Medium</SelectItem>
+                        <SelectItem value="5">Thick</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button onClick={addBadgeShape} className="w-full" variant="secondary">
+                    Add Badge to Design
                   </Button>
                 </TabsContent>
 
