@@ -116,52 +116,65 @@ export const CustomizationTool = ({ selectedProduct, onAddToCart }: Customizatio
     }
 
     let shape: Circle | Ellipse | Rect;
+    let shapeWidth = 0;
+    let shapeHeight = 0;
+    
     const shapeOptions = {
       fill: badgeFillColor,
       stroke: badgeBorderColor,
       strokeWidth: parseInt(badgeBorderWidth),
-      left: 200,
-      top: 200,
+      originX: "center" as const,
+      originY: "center" as const,
     };
 
     if (badgeShape === "circle") {
+      const radius = 70;
       shape = new Circle({
         ...shapeOptions,
-        radius: 60,
+        radius: radius,
       });
+      shapeWidth = shapeHeight = radius * 1.4; // Diameter with padding for text
     } else if (badgeShape === "oval") {
       shape = new Ellipse({
         ...shapeOptions,
-        rx: 80,
-        ry: 50,
+        rx: 90,
+        ry: 55,
       });
+      shapeWidth = 160;
+      shapeHeight = 90;
     } else if (badgeShape === "rectangle") {
       shape = new Rect({
         ...shapeOptions,
-        width: 150,
-        height: 80,
+        width: 160,
+        height: 90,
         rx: 0,
         ry: 0,
       });
+      shapeWidth = 140;
+      shapeHeight = 70;
     } else if (badgeShape === "rounded") {
       shape = new Rect({
         ...shapeOptions,
-        width: 150,
-        height: 80,
+        width: 160,
+        height: 90,
         rx: 20,
         ry: 20,
       });
+      shapeWidth = 140;
+      shapeHeight = 70;
     } else { // star
       shape = new Rect({
         ...shapeOptions,
-        width: 120,
-        height: 120,
+        width: 130,
+        height: 130,
         rx: 15,
         ry: 15,
         angle: 45,
       });
+      shapeWidth = shapeHeight = 90;
     }
 
+    // Create text and scale it to fit within the shape
     const text = new FabricText(badgeText, {
       fontSize: parseInt(badgeFontSize),
       fill: badgeTextColor,
@@ -171,9 +184,29 @@ export const CustomizationTool = ({ selectedProduct, onAddToCart }: Customizatio
       originY: "center",
     });
 
+    // Calculate scale to fit text within shape bounds
+    const textWidth = text.width || 1;
+    const textHeight = text.height || 1;
+    const scaleX = Math.min(1, (shapeWidth * 0.8) / textWidth);
+    const scaleY = Math.min(1, (shapeHeight * 0.8) / textHeight);
+    const scale = Math.min(scaleX, scaleY);
+    
+    text.scale(scale);
+
+    // Position text at center of shape (both have center origin)
+    text.set({
+      left: 0,
+      top: 0,
+    });
+
+    shape.set({
+      left: 0,
+      top: 0,
+    });
+
     const group = new Group([shape, text], {
-      left: 200,
-      top: 200,
+      left: 250,
+      top: 250,
     });
 
     fabricCanvas.add(group);
