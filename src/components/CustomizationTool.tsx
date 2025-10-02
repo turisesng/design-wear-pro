@@ -24,12 +24,27 @@ export const CustomizationTool = ({ selectedProduct, onAddToCart }: Customizatio
   const [fontFamily, setFontFamily] = useState("Arial");
 
   useEffect(() => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current || !selectedProduct) return;
 
     const canvas = new FabricCanvas(canvasRef.current, {
       width: 500,
       height: 600,
-      backgroundColor: "#f5f5f5",
+      backgroundColor: "#ffffff",
+    });
+
+    // Load product image onto canvas
+    FabricImage.fromURL(selectedProduct.image).then((img) => {
+      img.scaleToWidth(500);
+      img.scaleToHeight(600);
+      img.set({ 
+        left: 0, 
+        top: 0,
+        selectable: false,
+        evented: false
+      });
+      canvas.add(img);
+      canvas.sendObjectToBack(img);
+      canvas.renderAll();
     });
 
     setFabricCanvas(canvas);
@@ -37,7 +52,7 @@ export const CustomizationTool = ({ selectedProduct, onAddToCart }: Customizatio
     return () => {
       canvas.dispose();
     };
-  }, []);
+  }, [selectedProduct]);
 
   const addText = () => {
     if (!fabricCanvas || !text) {
